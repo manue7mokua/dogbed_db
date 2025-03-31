@@ -13,7 +13,7 @@ class Storage:
         self._f= f
         self.locked = False 
         # Ensures we start with a valid superblock
-        self.ensure_superblock()
+        self._ensure_superblock()
 
     def _ensure_superblock(self):
         self.lock()

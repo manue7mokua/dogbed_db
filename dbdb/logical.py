@@ -12,9 +12,9 @@ class ValueRef:
         if self._referent is None and self._address:
             # Value isn't loaded into memory, so fetch it from disk
             data = storage.read(self._address)
-
-            # Convert from serialized form to Python object
-            self._referent = self.string_to_referent(data)
+            if data:
+                # Convert from serialized form to Python object
+                self._referent = self.string_to_referent(data)
 
         return self._referent
 
@@ -64,7 +64,7 @@ class LogicalBase:
 
     def commit(self):
         # Save the tree if it has changed
-        self._tree_ref.store(self.storage)
+        self._tree_ref.store(self._storage)
 
         # Update the root address on disk
         self._storage.commit_root_address(self._tree_ref.address)

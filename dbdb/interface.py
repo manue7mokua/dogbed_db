@@ -17,7 +17,7 @@ class DBDB:
 
     def close(self):
         """Close the database file"""
-        self.__storage.close()
+        self._storage.close()
 
     def commit(self):
         """Commit changes to disk"""

@@ -1,8 +1,21 @@
 import pickle 
 from .logical import LogicalBase, ValueRef
 
+class StringValueRef(ValueRef):
+    """Reference to a string value on disk"""
+    
+    @staticmethod
+    def referent_to_string(referent):
+        """Serialize a string value to a string"""
+        return pickle.dumps(referent)
+    
+    @staticmethod
+    def string_to_referent(string):
+        """Deserialize a string value from a string"""
+        return pickle.loads(string)
+
 class BinaryNode:
-    def __init__(self, key, value_ref, left_ref, right_ref, length):
+    def __init__(self, left_ref, key, value_ref, right_ref, length):
         self.left_ref = left_ref
         self.key = key 
         self.value_ref = value_ref
@@ -46,7 +59,11 @@ class BinaryNodeRef(ValueRef):
     @classmethod
     def length_ref(cls):
         return cls(BinaryNode(
-            cls(), None, ValueRef(), cls(), 0
+            left_ref=ValueRef(),
+            key=None,
+            value_ref=ValueRef(),
+            right_ref=ValueRef(),
+            length=0
         ))
 
     def prepare_to_store(self, storage):
@@ -83,7 +100,7 @@ class BinaryNodeRef(ValueRef):
         return BinaryNode(
             left_ref=BinaryNodeRef(address=data['left']),
             key=data['key'],
-            value_ref=ValueRef(address=data['value']),
+            value_ref=StringValueRef(address=data['value']),
             right_ref=BinaryNodeRef(address=data['right']),
             length=data['length']
         )
@@ -96,6 +113,7 @@ class BinaryTree(LogicalBase):
     parts of the tree
     """
     node_ref_class = BinaryNodeRef
+    value_ref_class = StringValueRef  # Use StringValueRef for values
 
     def _get(self, node, key):
         while node is not None:
@@ -113,11 +131,11 @@ class BinaryTree(LogicalBase):
         if node is None:
             # Empty tree, create a leaf node
             new_node = BinaryNode(
-                self.node_ref_class(),  # empty left ref
-                key,
-                value_ref,
-                self.node_ref_class(),  # empty right ref
-                1                       # length is 1
+                left_ref=self.node_ref_class(),  # empty left ref
+                key=key,
+                value_ref=value_ref,
+                right_ref=self.node_ref_class(),  # empty right ref
+                length=1  # length is 1
             ) 
         elif key < node.key:
             # Key belongs in left subtree
@@ -191,6 +209,8 @@ class BinaryTree(LogicalBase):
                         right, successor.key
                     )
                 )
+
+        return self.node_ref_class(referent=new_node)
 
     def _find_min(self, node):
         """Find the node with the minimum key in a subtree"""
